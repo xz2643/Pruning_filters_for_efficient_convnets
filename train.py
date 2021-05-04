@@ -52,7 +52,9 @@ def train_step(network, data_loader, loss_calculator, optimizer, device, epoch, 
     network.train()
     # set benchmark flag to faster runtime
     torch.backends.cudnn.benchmark = True
+    starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
         
+    train_time = AverageMeter()
     data_time = AverageMeter()
     loss_time = AverageMeter()    
     forward_time = AverageMeter()
@@ -62,14 +64,18 @@ def train_step(network, data_loader, loss_calculator, optimizer, device, epoch, 
     top5 = AverageMeter()
     
     tic = time.time()
+    s_tic = time.time()
     for iteration, (inputs, targets) in enumerate(data_loader):
         data_time.update(time.time() - tic)
         
         inputs, targets = inputs.to(device), targets.to(device)
         
-        tic = time.time()
+        starter.record()
         outputs = network(inputs)
-        forward_time.update(time.time() - tic)
+        ender.record()
+        # WAIT FOR GPU SYNC
+        torch.cuda.synchronize()
+        forward_time.update(starter.elapsed_time(ender)/1000)
         
         tic = time.time()
         loss = loss_calculator.calc_loss(outputs, targets)
@@ -80,6 +86,8 @@ def train_step(network, data_loader, loss_calculator, optimizer, device, epoch, 
         loss.backward()
         optimizer.step()
         backward_time.update(time.time() - tic)
+
+        train_time.update(time.time() - s_tic)
         
         prec1, prec5 = accuracy(outputs.data, targets, topk=(1,5))
         top1.update(prec1.item(), inputs.size(0))
@@ -91,9 +99,11 @@ def train_step(network, data_loader, loss_calculator, optimizer, device, epoch, 
             logs_ += 'Iteration [%d/%d/], '%(iteration, len(data_loader))
             logs_ += 'Data(s): %2.3f, Loss(s): %2.3f, '%(data_time.avg, loss_time.avg)
             logs_ += 'Forward(s): %2.3f, Backward(s): %2.3f, '%(forward_time.avg, backward_time.avg)
+            logs_ += 'Train(s): %2.3f, '%(train_time.avg)
             logs_ += 'Top1: %2.3f, Top5: %2.4f, '%(top1.avg, top5.avg)
             logs_ += 'Loss: %2.3f'%loss_calculator.get_loss_log()
             print(logs_)            
                         
         tic = time.time()
+        s_tic = time.time()
     return None

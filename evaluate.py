@@ -25,12 +25,14 @@ def test_network(args, network=None, data_set=None):
     
 def test_step(network, data_loader, device):
     network.eval()
+    starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
         
     data_time = AverageMeter()
     forward_time = AverageMeter()    
     top1 = AverageMeter()
     top5 = AverageMeter()
     
+    total_time = 0
     with torch.no_grad():
         tic = time.time()
         for inputs, targets in data_loader:
@@ -38,9 +40,14 @@ def test_step(network, data_loader, device):
 
             inputs, targets = inputs.to(device), targets.to(device)
             
-            tic = time.time()
+            starter.record()
             outputs = network(inputs)
-            forward_time.update(time.time() - tic)
+            ender.record()
+            # WAIT FOR GPU SYNC
+            torch.cuda.synchronize()
+            cur_time = starter.elapsed_time(ender)/1000
+            forward_time.update(cur_time)
+            total_time += cur_time
             
             prec1, prec5 = accuracy(outputs, targets, topk=(1,5))
             
@@ -49,9 +56,12 @@ def test_step(network, data_loader, device):
             
             tic = time.time()
 
+    Throughput =  (len(data_loader)*100)/total_time
+
     str_ = '%s: Test information, '%time.ctime()
     str_ += 'Data(s): %2.3f, Forward(s): %2.3f, '%(data_time.sum, forward_time.sum)
     str_ += 'Top1: %2.3f, Top5: %2.3f, '%(top1.avg, top5.avg)
+    str_ += 'Final Throughput: %f, '%(Throughput)
     print("-*-"*10 + "\n\tEvalute network\n" + "-*-"*10)
     print(str_)
     
