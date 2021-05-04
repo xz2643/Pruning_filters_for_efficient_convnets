@@ -19,7 +19,7 @@ def prune_network(args, network=None):
     print(network)
 
     if args.retrain_flag:
-        # update arguemtns for retraing pruned network
+        # update arguments for retraining pruned network
         args.epoch = args.retrain_epoch
         args.lr = args.retrain_lr
         args.lr_milestone = None # don't decay learning rate

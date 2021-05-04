@@ -59,7 +59,7 @@ def test_step(network, data_loader, device):
     Throughput =  (len(data_loader)*100)/total_time
 
     str_ = '%s: Test information, '%time.ctime()
-    str_ += 'Data(s): %2.3f, Forward(s): %2.3f, '%(data_time.sum, forward_time.sum)
+    str_ += 'Data(s): %f, Forward(s): %f, '%(data_time.sum, forward_time.sum)
     str_ += 'Top1: %2.3f, Top5: %2.3f, '%(top1.avg, top5.avg)
     str_ += 'Final Throughput: %f, '%(Throughput)
     print("-*-"*10 + "\n\tEvalute network\n" + "-*-"*10)
