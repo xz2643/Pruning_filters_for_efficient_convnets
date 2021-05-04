@@ -18,7 +18,8 @@ class VGG(torch.nn.Module):
 
             features.append(resent.avgpool(x))
             self.features = features
-        else self.features = models.__dict__[vgg](pretrained=pretrained).features
+        else:
+            self.features = models.__dict__[vgg](pretrained=pretrained).features
         
         classifier = []
         if 'CIFAR' in data_set:
