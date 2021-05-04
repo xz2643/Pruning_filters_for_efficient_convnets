@@ -7,16 +7,16 @@ class VGG(torch.nn.Module):
         super(VGG, self).__init__()
         if vgg=='resnet50':
             features = []
-            features.append(resent.conv1(x))
+            features.append(resnet().conv1())
 
-            features.append(resent.layer1(x))  # 32x32
-            features.append(resent.layer2(x))  # 16x16
-            features.append(resent.layer3(x))  # 8x8
-            features.append(resent.layer4(x))
-            features.append(resent.bn(x))
-            features.append(resent.relu(x))
+            features.append(resnet().layer1) # 32x32
+            features.append(resnet().layer2)  # 16x16
+            features.append(resnet().layer3)  # 8x8
+            features.append(resnet().layer4)
+            features.append(resnet().bn)
+            features.append(resnet().relu)
 
-            features.append(resent.avgpool(x))
+            features.append(resnet().avgpool)
             self.features = features
         else:
             self.features = models.__dict__[vgg](pretrained=pretrained).features
@@ -32,7 +32,7 @@ class VGG(torch.nn.Module):
             raise RuntimeError("Not expected data flag !!!")
 
         if vgg=='resnet50':
-            self.classifier = 
+            self.classifier = resnet().fc
         self.classifier = torch.nn.Sequential(*classifier)
         
     def forward(self, x):
