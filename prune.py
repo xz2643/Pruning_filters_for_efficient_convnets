@@ -2,11 +2,17 @@ import torch
 
 from network import VGG
 from train import train_network
+from preresnet import resnet
 
 def prune_network(args, network=None):
     device = torch.device("cuda" if args.gpu_no >= 0 else "cpu")
 
-    if network is None:
+    if args.vgg == 'resnet50' and network is None:
+        network = resnet()
+        if args.load_path:
+            check_point = torch.load(args.load_path)
+            network.load_state_dict(check_point['state_dict'])
+    elif network is None:
         network = VGG(args.vgg, args.data_set)
         if args.load_path:
             check_point = torch.load(args.load_path)

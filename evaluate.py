@@ -4,11 +4,17 @@ import torch
 
 from network import VGG
 from utils import AverageMeter, get_data_set
+from preresnet import resnet
 
 def test_network(args, network=None, data_set=None):
     device = torch.device("cuda" if args.gpu_no >= 0 else "cpu")
     
-    if network is None:
+    if args.vgg == 'resnet50' and network is None:
+        network = resnet()
+        if args.load_path:
+            check_point = torch.load(args.load_path)
+            network.load_state_dict(check_point['state_dict'])
+    elif network is None:
         network = VGG(args.vgg, args.data_set)
         if args.load_path:
             check_point = torch.load(args.load_path)
