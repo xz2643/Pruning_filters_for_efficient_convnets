@@ -1,6 +1,7 @@
 import time
 
 import torch
+from torchsummary import summary
 
 from network import VGG
 from utils import AverageMeter, get_data_set
@@ -20,6 +21,7 @@ def test_network(args, network=None, data_set=None):
             check_point = torch.load(args.load_path)
             network.load_state_dict(check_point['state_dict'])
     network.to(device)
+    summary(network, (3, 224, 224))
 
     if data_set is None:
         data_set = get_data_set(args, train_flag=False)
