@@ -30,7 +30,7 @@ class Bottleneck(nn.Module):
         residual = x
 
         out = self.bn1(x)
-        out = self.select(out)
+        #out = self.select(out)
         out = self.relu(out)
         out = self.conv1(out)
 
@@ -113,7 +113,7 @@ class resnet(nn.Module):
         x = self.layer3(x)  # 8x8
         x = self.layer4(x)
         x = self.bn(x)
-        x = self.select(x)
+        #x = self.select(x)
         x = self.relu(x)
 
         x = self.avgpool(x)
