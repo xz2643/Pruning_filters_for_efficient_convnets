@@ -77,9 +77,9 @@ class resnet(nn.Module):
         self.avgpool = nn.AvgPool2d(4)
 
         if dataset == 'cifar10':
-            self.fc = nn.Linear(cfg[-1], 10)
+            self.classifier = nn.Linear(cfg[-1], 10)
         elif dataset == 'cifar100':
-            self.fc = nn.Linear(cfg[-1], 100)
+            self.classifier = nn.Linear(cfg[-1], 100)
 
         features = []
         features.append(self.conv1)
@@ -119,6 +119,6 @@ class resnet(nn.Module):
     def forward(self, x):
         x = self.features(x)
         x = x.view(x.size(0), -1)
-        x = self.fc(x)
+        x = self.classifier(x)
 
         return x
