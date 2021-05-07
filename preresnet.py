@@ -91,7 +91,7 @@ class resnet(nn.Module):
         features.append(self.relu)
         features.append(self.avgpool)
 
-        self.features = torch.nn.Sequential(*features)
+        self.features = nn.Sequential(*features)
         #for m in self.modules():
             #if isinstance(m, nn.Conv2d):
                 #n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
