@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 import math
 import torch.nn as nn
-from .channel_selection import channel_selection
 
 
 __all__ = ['resnet']
