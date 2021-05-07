@@ -11,8 +11,7 @@ def test_network(args, network=None, data_set=None):
     device = torch.device("cuda" if args.gpu_no >= 0 else "cpu")
     
     if args.vgg == 'resnet50' and network is None:
-        #network = resnet()
-        network = VGG(args.vgg, args.data_set)
+        network = resnet()
         if args.load_path:
             check_point = torch.load(args.load_path)
             network.load_state_dict(check_point['state_dict'])
@@ -22,7 +21,7 @@ def test_network(args, network=None, data_set=None):
             check_point = torch.load(args.load_path)
             network.load_state_dict(check_point['state_dict'])
     network.to(device)
-    summary(network, (3, 224, 224))
+    print(network)
 
     if data_set is None:
         data_set = get_data_set(args, train_flag=False)

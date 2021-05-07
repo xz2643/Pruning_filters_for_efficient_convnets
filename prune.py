@@ -8,8 +8,7 @@ def prune_network(args, network=None):
     device = torch.device("cuda" if args.gpu_no >= 0 else "cpu")
 
     if args.vgg == 'resnet50' and network is None:
-        #network = resnet()
-        network = VGG(args.vgg, args.data_set)
+        network = resnet()
         if args.load_path:
             check_point = torch.load(args.load_path)
             network.load_state_dict(check_point['state_dict'])
@@ -20,7 +19,10 @@ def prune_network(args, network=None):
             network.load_state_dict(check_point['state_dict'])
 
     # prune network
-    network = prune_step(network, args.prune_layers, args.prune_channels, args.independent_prune_flag)
+    if args.vgg == 'resnet50':
+        network = prune_resnet(network, args.prune_layers, args.prune_channels, args.independent_prune_flag)
+    else:
+        network = prune_step(network, args.prune_layers, args.prune_channels, args.independent_prune_flag)
     network = network.to(device)
     print("-*-"*10 + "\n\tPrune network\n" + "-*-"*10)
     print(network)
@@ -69,6 +71,38 @@ def prune_step(network, prune_layers, prune_channels, independent_prune_flag):
         network.classifier[0] = get_new_linear(network.classifier[0], channel_index)
 
     return network
+
+def prune_resnet(net, prune_layers, prune_channels, independent_prune_flag):
+    # init
+    arg_index = 0
+    residue = None
+    layers = [net.module.layer1, net.module.layer2, net.module.layer3, net.module.layer4]
+
+    # prune non-shortcut
+    conv_index = 2
+    for layer_index in range(len(layers)):
+        for block_index in range(len(layers[layer_index])):
+            if "conv_%d" % conv_index in prune_layers:
+                # identify channels to remove
+                remove_channels = get_channel_index(layers[layer_index][block_index].conv1.weight.data,
+                                                prune_channels[arg_index], residue)
+                print(prune_layers[arg_index], remove_channels)
+                # prune this layer's filter in dim=0
+                layers[layer_index][block_index].conv1 = get_new_conv(layers[layer_index][block_index].conv1,
+                                                                          remove_channels, independent_prune_flag)
+                # prune next layer's filter in dim=1
+                layers[layer_index][block_index].conv2, residue = get_new_conv(
+                layers[layer_index][block_index].conv2, remove_channels, independent_prune_flag)
+                residue = 0
+
+                # prune bn
+                layers[layer_index][block_index].bn1 = get_new_norm(layers[layer_index][block_index].bn1,
+                                                            remove_channels)
+                arg_index += 1
+            conv_index += 2
+    net = net.cuda()
+    print(net)
+    return net
 
 def get_channel_index(kernel, num_elimination, residue=None):
     # get cadidate channel index for pruning
