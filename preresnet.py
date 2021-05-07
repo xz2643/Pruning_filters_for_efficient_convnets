@@ -81,6 +81,17 @@ class resnet(nn.Module):
         elif dataset == 'cifar100':
             self.fc = nn.Linear(cfg[-1], 100)
 
+        features = []
+        features.append(self.conv1)
+        features.append(self.layer1)
+        features.append(self.layer2)
+        features.append(self.layer3)
+        features.append(self.layer4)
+        features.append(self.bn)
+        features.append(self.relu)
+        features.append(self.avgpool)
+
+        self.features = torch.nn.Sequential(*features)
         #for m in self.modules():
             #if isinstance(m, nn.Conv2d):
                 #n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
@@ -106,17 +117,7 @@ class resnet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        x = self.conv1(x)
-
-        x = self.layer1(x)  # 32x32
-        x = self.layer2(x)  # 16x16
-        x = self.layer3(x)  # 8x8
-        x = self.layer4(x)
-        x = self.bn(x)
-        #x = self.select(x)
-        x = self.relu(x)
-
-        x = self.avgpool(x)
+        x = self.features(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
 
