@@ -14,7 +14,8 @@ def train_network(args, network=None, data_set=None):
     device = torch.device("cuda" if args.gpu_no >= 0 else "cpu")
 
     if args.vgg == 'resnet50' and network is None:
-        network = resnet()
+        #network = resnet()
+        network = VGG(args.vgg, args.data_set)
     elif network is None:
         network = VGG(args.vgg, args.data_set)
     network = network.to(device)

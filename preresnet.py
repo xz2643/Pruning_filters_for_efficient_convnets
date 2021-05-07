@@ -53,6 +53,7 @@ class resnet(nn.Module):
     def __init__(self, depth=47, dataset='cifar10', cfg=None):
         super(resnet, self).__init__()
         assert (depth - 2) % 9 == 0, 'depth should be 9n+2'
+        features = []
 
         n = (depth - 2) // 9
         block = Bottleneck
@@ -67,29 +68,23 @@ class resnet(nn.Module):
 
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1,
                                bias=False)
-        self.layer1 = self._make_layer(block, 64, 3, cfg = cfg[0:9])
-        self.layer2 = self._make_layer(block, 128, 4, cfg = cfg[9:21], stride=2)
-        self.layer3 = self._make_layer(block, 256, 6, cfg = cfg[21:39], stride=2)
-        self.layer4 = self._make_layer(block, 512, 3, cfg = cfg[39:48], stride=2)
+        features.append(self.conv1)
+        self.layer1 = self._make_layer(features, block, 64, 3, cfg = cfg[0:9])
+        self.layer2 = self._make_layer(features, block, 128, 4, cfg = cfg[9:21], stride=2)
+        self.layer3 = self._make_layer(features, block, 256, 6, cfg = cfg[21:39], stride=2)
+        self.layer4 = self._make_layer(features, block, 512, 3, cfg = cfg[39:48], stride=2)
         self.bn = nn.BatchNorm2d(2048)
+        features.append(self.bn)
         #self.select = channel_selection(2048)
         self.relu = nn.ReLU(inplace=True)
+        features.append(self.relu)
         self.avgpool = nn.AvgPool2d(4)
+        features.append(self.avgpool)
 
         if dataset == 'cifar10':
             self.classifier = nn.Linear(cfg[-1], 10)
         elif dataset == 'cifar100':
             self.classifier = nn.Linear(cfg[-1], 100)
-
-        features = []
-        features.append(self.conv1)
-        features.append(self.layer1)
-        features.append(self.layer2)
-        features.append(self.layer3)
-        features.append(self.layer4)
-        features.append(self.bn)
-        features.append(self.relu)
-        features.append(self.avgpool)
 
         self.features = nn.Sequential(*features)
         #for m in self.modules():
@@ -100,19 +95,20 @@ class resnet(nn.Module):
                 #m.weight.data.fill_(0.5)
                 #m.bias.data.zero_()
 
-    def _make_layer(self, block, planes, blocks, cfg, stride=1):
+    def _make_layer(self, features, block, planes, blocks, cfg, stride=1):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
                 nn.Conv2d(self.inplanes, planes * block.expansion,
                           kernel_size=1, stride=stride, bias=False),
             )
+            features.append(downsample)
 
         layers = []
-        layers.append(block(self.inplanes, planes, cfg[0:3], stride, downsample))
+        layers.append(block(features, self.inplanes, planes, cfg[0:3], stride, downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes, cfg[3*i: 3*(i+1)]))
+            layers.append(block(features, self.inplanes, planes, cfg[3*i: 3*(i+1)]))
 
         return nn.Sequential(*layers)
 

@@ -8,7 +8,8 @@ def prune_network(args, network=None):
     device = torch.device("cuda" if args.gpu_no >= 0 else "cpu")
 
     if args.vgg == 'resnet50' and network is None:
-        network = resnet()
+        #network = resnet()
+        network = VGG(args.vgg, args.data_set)
         if args.load_path:
             check_point = torch.load(args.load_path)
             network.load_state_dict(check_point['state_dict'])
@@ -42,6 +43,7 @@ def prune_step(network, prune_layers, prune_channels, independent_prune_flag):
     dim = 0 # 0: prune corresponding dim of filter weight [out_ch, in_ch, k1, k2]
     residue = None # residue is need to prune by 'independent strategy'
     for i in range(len(network.features)):
+        print(network.features[i])
         if isinstance(network.features[i], torch.nn.Conv2d):
             if dim == 1:
                 new_, residue = get_new_conv(network.features[i], dim, channel_index, independent_prune_flag)
