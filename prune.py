@@ -136,7 +136,8 @@ def get_new_conv(conv, dim, channel_index, independent_prune_flag=False):
                                    stride=conv.stride, padding=conv.padding, dilation=conv.dilation)
         
         new_conv.weight.data = index_remove(conv.weight.data, dim, channel_index)
-        new_conv.bias.data = index_remove(conv.bias.data, dim, channel_index)
+        if conv.bias is not None:
+            new_conv.bias.data = index_remove(conv.bias.data, dim, channel_index)
 
         return new_conv
 
@@ -151,7 +152,8 @@ def get_new_conv(conv, dim, channel_index, independent_prune_flag=False):
         if independent_prune_flag:
             new_weight, residue = new_weight
         new_conv.weight.data = new_weight
-        new_conv.bias.data = conv.bias.data
+        if conv.bias is not None:
+            new_conv.bias.data = conv.bias.data
 
         return new_conv, residue
 
