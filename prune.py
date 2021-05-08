@@ -94,7 +94,7 @@ def prune_resnet(net, prune_layers, independent_prune_flag):
                 residue = None
 
                 # prune bn
-                layers[layer_index][block_index].bn2 = get_new_norm(layers[layer_index][block_index].bn1,
+                layers[layer_index][block_index].bn2 = get_new_norm(layers[layer_index][block_index].bn2,
                                                                 remove_channels)
     
             arg_index += 1
