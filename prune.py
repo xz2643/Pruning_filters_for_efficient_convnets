@@ -77,7 +77,7 @@ def prune_resnet(net, prune_layers, independent_prune_flag):
     arg_index = 1
     residue = None
     layers = [net.layer1, net.layer2, net.layer3, net.layer4]
-    prune_rate = [0.3,0.3,0.3]
+    prune_rate = [0.3,0.3,0.3,0.3]
 
     for layer_index in range(len(layers)):
         for block_index in range(len(layers[layer_index])):
