@@ -21,7 +21,7 @@ def test_network(args, network=None, data_set=None):
             check_point = torch.load(args.load_path)
             network.load_state_dict(check_point['state_dict'])
     network.to(device)
-    print(network)
+    #print(network)
 
     if data_set is None:
         data_set = get_data_set(args, train_flag=False)

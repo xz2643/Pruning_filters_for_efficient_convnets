@@ -1,5 +1,6 @@
 import torch
 
+from torchstat import stat
 from network import VGG
 from train import train_network
 from preresnet import resnet
@@ -18,6 +19,8 @@ def prune_network(args, network=None):
             check_point = torch.load(args.load_path)
             network.load_state_dict(check_point['state_dict'])
 
+    stat(network, (3, 32, 32))
+
     # prune network
     if args.vgg == 'resnet50':
         network = prune_resnet(network, args.prune_layers, args.independent_prune_flag)
@@ -35,6 +38,7 @@ def prune_network(args, network=None):
 
         network = train_network(args, network)
 
+    stat(network, (3, 32, 32))
     return network
 
 def prune_step(network, prune_layers, prune_channels, independent_prune_flag):
@@ -96,7 +100,6 @@ def prune_resnet(net, prune_layers, independent_prune_flag):
                 # prune bn
                 layers[layer_index][block_index].bn2 = get_new_norm(layers[layer_index][block_index].bn2,
                                                                 remove_channels)
-    
             arg_index += 1
     print(arg_index)        
     net = net.cuda()
