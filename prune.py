@@ -20,7 +20,7 @@ def prune_network(args, network=None):
             network.load_state_dict(check_point['state_dict'])
 
     input = torch.randn(1, 3, 32, 32)
-    macs, params = profile(network, inputs=(input, ))
+    macs, params = profile(network.cpu, inputs=(input, ))
     print(macs)
     print(params)
 
@@ -42,7 +42,7 @@ def prune_network(args, network=None):
         network = train_network(args, network)
 
     input = torch.randn(1, 3, 32, 32)
-    macs, params = profile(network, inputs=(input, ))
+    macs, params = profile(network.cpu, inputs=(input, ))
     print(macs)
     print(params)
     return network
