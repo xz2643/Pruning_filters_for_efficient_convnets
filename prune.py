@@ -25,7 +25,7 @@ def prune_network(args, network=None):
         network = prune_step(network, args.prune_layers, args.prune_channels, args.independent_prune_flag)
     network = network.to(device)
     print("-*-"*10 + "\n\tPrune network\n" + "-*-"*10)
-    print(network)
+    #print(network)
 
     if args.retrain_flag:
         # update arguments for retraining pruned network
@@ -94,9 +94,11 @@ def prune_resnet(net, prune_layers, independent_prune_flag):
                 residue = None
 
                 # prune bn
-                layers[layer_index][block_index].bn1 = get_new_norm(layers[layer_index][block_index].bn1,
+                layers[layer_index][block_index].bn2 = get_new_norm(layers[layer_index][block_index].bn1,
                                                                 remove_channels)
+    
             arg_index += 1
+    print(arg_index)        
     net = net.cuda()
     return net
 
