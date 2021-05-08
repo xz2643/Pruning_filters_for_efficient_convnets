@@ -20,7 +20,7 @@ def prune_network(args, network=None):
 
     # prune network
     if args.vgg == 'resnet50':
-        network = prune_resnet(network, args.prune_layers, args.independent_prune_flag)
+        network = prune_resnet(network, args.prune_layers, args.prune_channels, args.independent_prune_flag)
     else:
         network = prune_step(network, args.prune_layers, args.prune_channels, args.independent_prune_flag)
     network = network.to(device)
@@ -72,22 +72,24 @@ def prune_step(network, prune_layers, prune_channels, independent_prune_flag):
 
     return network
 
-def prune_resnet(net, prune_layers, independent_prune_flag):
+def prune_resnet(net, prune_layers, prune_channels, independent_prune_flag):
     # init
-    arg_index = 1
+    arg_index = 0
     residue = None
     layers = [net.layer1, net.layer2, net.layer3, net.layer4]
-    prune_rate = [0.3,0.3,0.3]
 
+    # prune non-shortcut
+    conv_index = 2
     for layer_index in range(len(layers)):
         for block_index in range(len(layers[layer_index])):
-            if 'block%d'%arg_index in prune_layers:
+            if "conv_%d" % conv_index in prune_layers:
                 # identify channels to remove
                 remove_channels = get_channel_index(layers[layer_index][block_index].conv1.weight.data,
-                                                    int(round(layers[layer_index][block_index].conv1.out_channels * prune_rate[layer_index])), residue)
+                                                prune_channels[arg_index], residue)
+                print(prune_layers[arg_index], remove_channels)
                 # prune this layer's filter in dim=0
                 layers[layer_index][block_index].conv1 = get_new_conv(layers[layer_index][block_index].conv1,0,
-                                                                    remove_channels, independent_prune_flag)
+                                                                          remove_channels, independent_prune_flag)
                 # prune next layer's filter in dim=1
                 layers[layer_index][block_index].conv2, residue = get_new_conv(
                 layers[layer_index][block_index].conv2, 1, remove_channels, independent_prune_flag)
@@ -95,8 +97,9 @@ def prune_resnet(net, prune_layers, independent_prune_flag):
 
                 # prune bn
                 layers[layer_index][block_index].bn1 = get_new_norm(layers[layer_index][block_index].bn1,
-                                                                remove_channels)
-            arg_index += 1
+                                                            remove_channels)
+                arg_index += 1
+            conv_index += 3
     net = net.cuda()
     return net
 
