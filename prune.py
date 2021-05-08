@@ -1,6 +1,6 @@
 import torch
 
-from torchstat import stat
+from thop import profile
 from network import VGG
 from train import train_network
 from preresnet import resnet
@@ -19,7 +19,10 @@ def prune_network(args, network=None):
             check_point = torch.load(args.load_path)
             network.load_state_dict(check_point['state_dict'])
 
-    stat(network, (3, 32, 32))
+    input = (1, 3, 32, 32)
+    macs, params = profile(network, inputs=(input, ))
+    print(macs)
+    print(params)
 
     # prune network
     if args.vgg == 'resnet50':
@@ -38,7 +41,10 @@ def prune_network(args, network=None):
 
         network = train_network(args, network)
 
-    stat(network, (3, 32, 32))
+    input = (1, 3, 32, 32)
+    macs, params = profile(network, inputs=(input, ))
+    print(macs)
+    print(params)
     return network
 
 def prune_step(network, prune_layers, prune_channels, independent_prune_flag):
