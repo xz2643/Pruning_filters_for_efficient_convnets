@@ -5,6 +5,7 @@ from train import train_network
 from preresnet import resnet
 
 def prune_network(args, network=None):
+    resnet_prune_layer = 3;
     device = torch.device("cuda" if args.gpu_no >= 0 else "cpu")
 
     if args.vgg == 'resnet50' and network is None:
@@ -20,7 +21,13 @@ def prune_network(args, network=None):
 
     # prune network
     if args.vgg == 'resnet50':
-        network = prune_resnet(network, args.prune_layers, args.independent_prune_flag)
+        if resnet_prune_layer == 1:
+            network = prune_resnet_1(network, args.prune_layers, args.independent_prune_flag)
+        if resnet_prune_layer == 2:
+            network = prune_resnet_2(network, args.prune_layers, args.independent_prune_flag)
+        if resnet_prune_layer == 3:
+            network = prune_resnet_3(network, args.prune_layers, args.independent_prune_flag)
+        
     else:
         network = prune_step(network, args.prune_layers, args.prune_channels, args.independent_prune_flag)
     network = network.to(device)
@@ -72,7 +79,7 @@ def prune_step(network, prune_layers, prune_channels, independent_prune_flag):
 
     return network
 
-def prune_resnet(net, prune_layers, independent_prune_flag):
+def prune_resnet_1(net, prune_layers, independent_prune_flag):
     # init
     arg_index = 1
     residue = None
@@ -97,6 +104,71 @@ def prune_resnet(net, prune_layers, independent_prune_flag):
                 layers[layer_index][block_index].bn2 = get_new_norm(layers[layer_index][block_index].bn2,
                                                                 remove_channels)
             arg_index += 1
+    #print(arg_index)        
+    net = net.cuda()
+    return net
+
+def prune_resnet_2(net, prune_layers, independent_prune_flag):
+    # init
+    arg_index = 1
+    residue = None
+    layers = [net.layer1, net.layer2, net.layer3, net.layer4]
+    prune_rate = [0.3,0.3,0.3,0.3]
+
+    for layer_index in range(len(layers)):
+        for block_index in range(len(layers[layer_index])):
+            if 'block%d'%arg_index in prune_layers:
+                # identify channels to remove
+                remove_channels = get_channel_index(layers[layer_index][block_index].conv2.weight.data,
+                                                    int(round(layers[layer_index][block_index].conv2.out_channels * prune_rate[layer_index])), residue)
+                # prune this layer's filter in dim=0
+                layers[layer_index][block_index].conv2 = get_new_conv(layers[layer_index][block_index].conv2,0,
+                                                                    remove_channels, independent_prune_flag)
+                # prune next layer's filter in dim=1
+                layers[layer_index][block_index].conv3, residue = get_new_conv(
+                layers[layer_index][block_index].conv3, 1, remove_channels, independent_prune_flag)
+                residue = None
+
+                # prune bn
+                layers[layer_index][block_index].bn3 = get_new_norm(layers[layer_index][block_index].bn3,
+                                                                remove_channels)
+            arg_index += 1
+    #print(arg_index)        
+    net = net.cuda()
+    return net
+
+def prune_resnet_3(net, prune_layers, independent_prune_flag):
+    # init
+    arg_index = 1
+    residue = None
+    layers = [net.layer1, net.layer2, net.layer3, net.layer4]
+    prune_rate = [0.3,0.3,0.3,0.3]
+    last_prune = False
+
+    for layer_index in range(len(layers)):
+        for block_index in range(len(layers[layer_index])):
+            if last_prune:
+                layers[layer_index][block_index].conv1, residue = get_new_conv(layers[layer_index][block_index].conv1, remove_channels, 1)
+                layers[layer_index][block_index].downsample, residue = get_new_conv(layers[layer_index][block_index].downsample, remove_channels, 1)
+
+            last_prune = False
+            if 'block%d'%arg_index in prune_layers:
+                # identify channels to remove
+                remove_channels = get_channel_index(layers[layer_index][block_index].downsample.weight.data,
+                                                    int(round(layers[layer_index][block_index].downsample.out_channels * prune_rate[layer_index])), residue)
+                # prune downsample layer's filter in dim=0
+                layers[layer_index][block_index].downsample = get_new_conv(layers[layer_index][block_index].downsample,0,
+                                                                    remove_channels, independent_prune_flag)
+                # prune conv3 layer's filter in dim=0
+                layers[layer_index][block_index].conv3 = get_new_conv(
+                layers[layer_index][block_index].conv3, 0, remove_channels, independent_prune_flag)
+                last_prune = True
+                residue = None
+            
+            arg_index += 1
+
+    if 'block16' in prune_layers:
+        net.classifier = get_new_linear(net.classifier, remove_channels)
     print(arg_index)        
     net = net.cuda()
     return net
