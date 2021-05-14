@@ -149,15 +149,15 @@ def prune_resnet_3(net, prune_layers, independent_prune_flag):
         for block_index in range(len(layers[layer_index])):
             if last_prune:
                 layers[layer_index][block_index].conv1, residue = get_new_conv(layers[layer_index][block_index].conv1, remove_channels, 1)
-                layers[layer_index][block_index].downsample, residue = get_new_conv(layers[layer_index][block_index].downsample, remove_channels, 1)
+                layers[layer_index][block_index].downsample[0], residue = get_new_conv(layers[layer_index][block_index].downsample[0], remove_channels, 1)
 
             last_prune = False
             if 'block%d'%arg_index in prune_layers:
                 # identify channels to remove
-                remove_channels = get_channel_index(layers[layer_index][block_index].downsample.weight.data,
-                                                    int(round(layers[layer_index][block_index].downsample.out_channels * prune_rate[layer_index])), residue)
+                remove_channels = get_channel_index(layers[layer_index][block_index].downsample[0].weight.data,
+                                                    int(round(layers[layer_index][block_index].downsample[0].out_channels * prune_rate[layer_index])), residue)
                 # prune downsample layer's filter in dim=0
-                layers[layer_index][block_index].downsample = get_new_conv(layers[layer_index][block_index].downsample,0,
+                layers[layer_index][block_index].downsample[0] = get_new_conv(layers[layer_index][block_index].downsample[0],0,
                                                                     remove_channels, independent_prune_flag)
                 # prune conv3 layer's filter in dim=0
                 layers[layer_index][block_index].conv3 = get_new_conv(
