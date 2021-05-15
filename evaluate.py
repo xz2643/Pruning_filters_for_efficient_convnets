@@ -10,13 +10,13 @@ from preresnet import resnet
 def test_network(args, network=None, data_set=None):
     device = torch.device("cuda" if args.gpu_no >= 0 else "cpu")
     
-    if args.vgg == 'resnet50' and network is None:
+    if args.net == 'resnet50' and network is None:
         network = resnet()
         if args.load_path:
             check_point = torch.load(args.load_path)
             network.load_state_dict(check_point['state_dict'])
     elif network is None:
-        network = VGG(args.vgg, args.data_set)
+        network = VGG(args.net, args.data_set)
         if args.load_path:
             check_point = torch.load(args.load_path)
             network.load_state_dict(check_point['state_dict'])
@@ -25,7 +25,7 @@ def test_network(args, network=None, data_set=None):
 
     if data_set is None:
         data_set = get_data_set(args, train_flag=False)
-    data_loader = torch.utils.data.DataLoader(data_set, batch_size=100, shuffle=False)
+    data_loader = torch.utils.data.DataLoader(data_set, batch_size=1, shuffle=False)
 
     top1, top5 = test_step(network, data_loader, device)
     
@@ -64,10 +64,10 @@ def test_step(network, data_loader, device):
             
             tic = time.time()
 
-    Throughput =  (len(data_loader)*100)/total_time
+    Throughput =  len(data_loader)/total_time
 
     str_ = '%s: Test information, '%time.ctime()
-    str_ += 'Data(s): %f, Forward(s): %f, '%(data_time.sum, forward_time.sum)
+    str_ += 'Data(s): %f, Forward(s): %f, '%(data_time.sum, forward_time.avg)
     str_ += 'Top1: %2.3f, Top5: %2.3f, '%(top1.avg, top5.avg)
     str_ += 'Final Throughput: %f, '%(Throughput)
     print("-*-"*10 + "\n\tEvalute network\n" + "-*-"*10)

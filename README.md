@@ -1,72 +1,70 @@
 Pruning Filters For Efficient ConvNets
 ==
-**Unofficial PyTorch implementation of pruning VGG on CIFAR-10 Data set**
+**Pruning VGG19 and Resnet50 on CIFAR-10 Dataset**
 
 **Reference**: [Pruning Filters For Efficient ConvNets, ICLR2017](https://arxiv.org/abs/1608.08710)
 
-**Contact**: Minseong Kim (tyui592@gmail.com)
-
-
-Requirements
---
-* torch (version: 1.2.0)
-* torchvision (version: 0.4.0)
-* Pillow (version: 6.1.0)
-* matplotlib (version: 3.1.1)
-* numpy (version: 1.16.5)
+https://github.com/tyui592/Pruning_filters_for_efficient_convnets
 
 Usage
 --
 
 ### Arguments
-* `--train-flag`: Train VGG on CIFAR Data set
-* `--save-path`: Path to save results, ex) trained_models/
-* `--load-path`: Path to load checkpoint, add 'checkpoint.pht' with `save_path`, ex) trained_models/checkpoint.pth
+* `--train-flag`: Train VGG or Resnet on CIFAR Dataset
+* `--save-path`: Path to save results (e.g. trained_models/)
+* `--load-path`: Path to load checkpoint, add 'checkpoint.pth' with `save_path`, (e.g. trained_models/checkpoint.pth)
 * `--resume-flag`: Resume the training from checkpoint loaded with `load-path`
-* `--prune-flag`: Prune VGG
-* `--prune-layers`: List of target convolution layers for pruning, ex) conv1 conv2
-* `--prune-channels`: List of number of channels for pruning the `prune-layers`, ex) 4 14
-* `--independent-prune-flag`: Prune multiple layers by independent strategy
+* `--prune-flag`: Prune VGG or Resnet
+* `--prune-layers`: List of target convolution layers (VGG19) or residual blocks(Resnet50) for pruning (e.g. conv1 conv2/block1 block2)
+* `--prune-channels`: List of number of channels for pruning the prune-layers (only for VGG19 as Resnet50 uses ratio instead)
+* `--independent-prune-flag`: Prune multiple layers by independent strategy (if it is not used, then greedy approach is applied)
 * `--retrain-flag`: Retrain the pruned nework
 * `--retrain-epoch`: Number of epoch for retraining pruned network
-* `--retrain-lr`: Number of epoch for retraining pruned network
+* `--retrain-lr`: Retrain learning rate, default=0.001
 
 ### Example Scripts
 
-#### Train VGG on CIFAR-10 Data set
+#### Train VGG19 on CIFAR-10 Dataset
 ```
-python main.py --train-flag --data-set CIFAR10 --vgg vgg16_bn --save-path ./trained_models/
-```
-
-#### Prune VGG by 'greedy strategy'
-```
-python main.py --prune-flag --load-path ./trained_models/check_point.pth --save-path ./trained_models/pruning_reuslts/ --prune-layers conv1 conv2 --prune-channels 1 1 
+python3 main.py --train-flag --data-set CIFAR10 --vgg vgg19_bn --save-path ./vgg_trained_models/
 ```
 
-#### Prune VGG by 'independent strategy'
+#### Prune VGG19 by 'greedy strategy'
 ```
-python main.py --prune-flag --load-path ./trained_models/check_point.pth --save-path ./trained_models/pruning_reuslts/ --prune-layers conv1 conv2 --prune-channels 1 1 --independent-prune-flag
-```
-
-#### Retrain the pruned network
-```
-python main.py --prune-flag --load-path ./trained_models/check_point.pth --save-path ./trained_models/pruning_reuslts/ --prune-layers conv1 --prune-channels 1 --retrain-flag --retrain-epoch 20 --retrain-lr 0.001
+python3 main.py --vgg vgg19_bn --prune-flag --load-path ./vgg_trained_models/check_point.pth --save-path ./vgg_trained_models/pruning_results/ --prune-layers conv1 conv9 conv10 conv11 conv12 conv13 conv14 conv15 conv16 --prune-channels 46 256 256 256 256 256 256 256 256
 ```
 
-Results
---
+#### Prune VGG19 by 'independent strategy'
+```
+python3 main.py --vgg vgg19_bn --prune-flag --load-path ./vgg_trained_models/check_point.pth --save-path ./vgg_trained_models/pruning_results/ --prune-layers conv1 conv9 conv10 conv11 conv12 conv13 conv14 conv15 conv16 --prune-channels 46 256 256 256 256 256 256 256 256 --independent-prune-flag
+```
 
-#### Absolute sum of filter weights for each layer of VGG-16 trained on CIFARA-10
-* This graph was created in [jupyter notebook](https://github.com/tyui592/notepad/blob/master/pruning_filters_for_efficient_convets/prune_filter_for_efficient_convnets.ipynb). You can make the graph yourself.
+#### Retrain the pruned VGG19 network
+```
+python3 main.py --vgg vgg19_bn --prune-flag --load-path ./vgg_trained_models/check_point.pth --save-path ./vgg_trained_models/pruning_results/ --prune-layers conv1 conv9 conv10 conv11 conv12 conv13 conv14 conv15 conv16 --prune-channels 46 256 256 256 256 256 256 256 256 --independent-prune-flag --retrain-flag --retrain-epoch 40 --retrain-lr 0.001
+```
 
-![figure1](./imgs/figure1.png)
+#### Train Resnet50 on CIFAR-10 Dataset
 
-#### Pruning filters with the lowest absolute weights sum and their corresponding test accuracies on CIFAR-10
-* This graph was created in [jupyter notebook](https://github.com/tyui592/notepad/blob/master/pruning_filters_for_efficient_convets/prune_filter_for_efficient_convnets.ipynb). You can make the graph yourself.
+```
+python3 main.py --train-flag --data-set CIFAR10 --vgg resnet50 --save-path ./resnet_trained_models/ --resume-flag --load-path ./resnet_trained_models/check_point.pth
+```
 
-![figure2](./imgs/figure2.png)
+#### Prune Resnet50 by 'greedy strategy'
 
-#### Prune and retrain for each single layer of VGG-16 on CIFAR-10
-* This graph was created in [jupyter notebook](https://github.com/tyui592/notepad/blob/master/pruning_filters_for_efficient_convets/prune_filter_for_efficient_convnets.ipynb). You can make the graph yourself.
+```
+python3 main.py  --vgg resnet50 --prune-flag --load-path ./resnet_trained_models/check_point.pth --save-path ./resnet_trained_models/pruning_results/ --prune-layers block1 block2 block5 block6 block7 block9 block10 block11 block12 block15 block16
+```
 
-![figure3](./imgs/figure3.png)
+#### Prune Resnet50 by 'independent strategy'
+
+```
+python3 main.py  --vgg resnet50 --prune-flag --load-path ./resnet_trained_models/check_point.pth --save-path ./resnet_trained_models/pruning_results/ --prune-layers block1 block2 block5 block6 block7 block9 block10 block11 block12 block15 block16 --independent-prune-flag
+```
+
+#### Retrain the pruned Resnet50 network
+
+```
+python3 main.py  --vgg resnet50 --prune-flag --load-path ./resnet_trained_models/check_point.pth --save-path ./resnet_trained_models/pruning_results/ --prune-layers block1 block2 block5 block6 block7 block9 block10 block11 block12 block15 block16 --independent-prune-flag --retrain-flag --retrain-epoch 40 --retrain-lr 0.001
+```
+

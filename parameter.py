@@ -33,8 +33,8 @@ def build_parser():
     parser.add_argument('--data-path', type=str,
                     help='Path of dataset', default='../')
 
-    parser.add_argument('--vgg', type=str,
-                    help='version of vgg network', default='vgg16_bn')
+    parser.add_argument('--net', type=str,
+                    help='model type', default='vgg_19_bn')
     
     parser.add_argument('--start-epoch', type=int,
                     help='start epoch for training network', default=0)

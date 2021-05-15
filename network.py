@@ -2,7 +2,7 @@ import torch
 import torchvision.models as models
 
 class VGG(torch.nn.Module):
-    def __init__(self, vgg='vgg16_bn', data_set='CIFAR10', pretrained=False):
+    def __init__(self, vgg='vgg19_bn', data_set='CIFAR10', pretrained=False):
         super(VGG, self).__init__()
         self.features = models.__dict__[vgg](pretrained=pretrained).features
         
